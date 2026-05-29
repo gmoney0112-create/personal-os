@@ -52,7 +52,7 @@ export default function App() {
         <div className="flex items-center gap-4">
           <span className="text-gray-400 text-sm">{user.email}</span>
           <button onClick={() => supabase.auth.signOut()} className="text-xs uppercase tracking-widest text-gray-500 hover:text-white">Sign Out</button>
-        </div}
+        </div>
       </header>
 
       <main className="max-w-4xl mx-auto">
