@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 
 dotenv.config({ path: '.env.local' });
@@ -128,6 +129,124 @@ app.patch('/api/tasks/:taskId', requireAuth, async (req, res) => {
     return res.status(500).json({ message: 'Failed to update task' });
   }
   res.json(data[0]);
+});
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+const AI_TOOLS = [
+  {
+    name: 'create_task',
+    description: 'Create a new task for the user',
+    input_schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Task title' },
+        priority: { type: 'string', enum: ['low', 'medium', 'high'] }
+      },
+      required: ['title', 'priority']
+    }
+  },
+  {
+    name: 'update_task',
+    description: 'Update the status or priority of an existing task',
+    input_schema: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'The task ID' },
+        status: { type: 'string', enum: ['todo', 'in-progress', 'done'] },
+        priority: { type: 'string', enum: ['low', 'medium', 'high'] }
+      },
+      required: ['taskId']
+    }
+  },
+  {
+    name: 'delete_task',
+    description: 'Delete a task by ID',
+    input_schema: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'The task ID' }
+      },
+      required: ['taskId']
+    }
+  }
+];
+
+app.post('/api/ai/command', requireAuth, async (req, res) => {
+  const { message, tasks = [] } = req.body;
+  if (!message?.trim()) {
+    return res.status(400).json({ message: 'message is required' });
+  }
+
+  const taskList = tasks.length
+    ? tasks.map(t => `- [${t.id}] "${t.title}" | priority: ${t.priority} | status: ${t.status}`).join('\n')
+    : 'No tasks yet.';
+
+  const systemPrompt = `You are an AI command interface for "Personal OS — Imperial Command Center", a personal productivity dashboard.
+Help the user manage their tasks using natural language. Use tools to create, update, or delete tasks when asked.
+For questions or advice (e.g. "what should I focus on?"), respond concisely without using tools.
+Keep responses brief and fitting the Imperial theme.
+
+Current tasks (${tasks.length}):
+${taskList}`;
+
+  try {
+    const aiResponse = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 512,
+      system: systemPrompt,
+      tools: AI_TOOLS,
+      messages: [{ role: 'user', content: message }]
+    });
+
+    const actions = [];
+    let text = '';
+
+    for (const block of aiResponse.content) {
+      if (block.type === 'text') {
+        text = block.text;
+      } else if (block.type === 'tool_use') {
+        const { name, input } = block;
+
+        if (name === 'create_task') {
+          const { data, error } = await supabaseAdmin
+            .from('tasks')
+            .insert([{ user_id: req.user.id, title: input.title.trim(), priority: input.priority, status: 'todo' }])
+            .select();
+          if (!error) actions.push({ type: 'created', task: data[0] });
+        } else if (name === 'update_task') {
+          const { data: existing } = await supabaseAdmin.from('tasks').select('user_id').eq('id', input.taskId).single();
+          if (existing?.user_id === req.user.id) {
+            const updates = {};
+            if (input.status) updates.status = input.status;
+            if (input.priority) updates.priority = input.priority;
+            const { data } = await supabaseAdmin.from('tasks').update(updates).eq('id', input.taskId).select();
+            if (data?.[0]) actions.push({ type: 'updated', task: data[0] });
+          }
+        } else if (name === 'delete_task') {
+          const { data: existing } = await supabaseAdmin.from('tasks').select('user_id').eq('id', input.taskId).single();
+          if (existing?.user_id === req.user.id) {
+            await supabaseAdmin.from('tasks').delete().eq('id', input.taskId);
+            actions.push({ type: 'deleted', taskId: input.taskId });
+          }
+        }
+      }
+    }
+
+    if (!text && actions.length > 0) {
+      text = actions.map(a => {
+        if (a.type === 'created') return `Created "${a.task.title}" (${a.task.priority} priority).`;
+        if (a.type === 'updated') return `Updated "${a.task.title}".`;
+        if (a.type === 'deleted') return 'Task deleted.';
+        return '';
+      }).join(' ');
+    }
+
+    res.json({ response: text, actions });
+  } catch (err) {
+    console.error('AI command error:', err.message);
+    res.status(500).json({ message: 'AI command failed' });
+  }
 });
 
 export { app };

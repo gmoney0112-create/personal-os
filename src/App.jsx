@@ -4,10 +4,11 @@ import { useTasks } from './hooks/useTasks';
 import LoginScreen from './components/LoginScreen';
 import TaskInput from './components/TaskInput';
 import TaskList from './components/TaskList';
+import AICommandBar from './components/AICommandBar';
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const { tasks, loading, error, addTask, deleteTask, updateTask } = useTasks(user);
+  const { tasks, loading, error, addTask, deleteTask, updateTask, refetch } = useTasks(user);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -41,6 +42,7 @@ export default function App() {
       </header>
 
       <main className="max-w-4xl mx-auto">
+        <AICommandBar tasks={tasks} onTasksChanged={refetch} />
         <TaskInput onAdd={addTask} />
         <TaskList
           tasks={tasks}
