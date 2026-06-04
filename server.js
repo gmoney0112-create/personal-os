@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 
@@ -12,6 +13,24 @@ const PORT = process.env.PORT || 3001;
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') ?? ['http://localhost:5173'];
 app.use(cors({ origin: ALLOWED_ORIGINS }));
 app.use(express.json());
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many requests, please try again later.' },
+});
+
+const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'AI command limit reached, please wait before trying again.' },
+});
+
+app.use('/api', apiLimiter);
 
 // Service role client — never expose this key client-side
 const supabaseAdmin = createClient(
@@ -172,7 +191,7 @@ const AI_TOOLS = [
   }
 ];
 
-app.post('/api/ai/command', requireAuth, async (req, res) => {
+app.post('/api/ai/command', aiLimiter, requireAuth, async (req, res) => {
   const { message, tasks = [] } = req.body;
   if (!message?.trim()) {
     return res.status(400).json({ message: 'message is required' });
