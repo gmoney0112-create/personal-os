@@ -307,6 +307,8 @@ ${taskList}`;
 
 export { app };
 
-app.listen(PORT, () => {
-  console.log(`Imperial Backend running on port ${PORT}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Imperial Backend running on port ${PORT}`);
+  });
+}
