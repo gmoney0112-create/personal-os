@@ -8,4 +8,5 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   created_at: string;
+  completed_at: string | null;
 }

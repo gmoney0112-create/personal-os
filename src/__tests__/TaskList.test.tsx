@@ -3,8 +3,8 @@ import TaskList from '../components/TaskList';
 import type { Task } from '../types';
 
 const tasks: Task[] = [
-  { id: '1', user_id: 'u1', title: 'Task One', status: 'todo', priority: 'high', created_at: '' },
-  { id: '2', user_id: 'u1', title: 'Task Two', status: 'done', priority: 'low', created_at: '' },
+  { id: '1', user_id: 'u1', title: 'Task One', status: 'todo', priority: 'high', created_at: '', completed_at: null },
+  { id: '2', user_id: 'u1', title: 'Task Two', status: 'done', priority: 'low', created_at: '', completed_at: '2026-06-04T00:00:00Z' },
 ];
 
 describe('TaskList', () => {

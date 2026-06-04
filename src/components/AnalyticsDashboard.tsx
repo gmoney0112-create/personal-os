@@ -57,12 +57,22 @@ export default function AnalyticsDashboard({ tasks }: Props) {
   const highPriority = tasks.filter(t => t.priority === 'high').length;
   const completionRate = tasks.length ? Math.round((done / tasks.length) * 100) : 0;
 
+  const avgCompletionHours = useMemo(() => {
+    const timed = tasks.filter(t => t.status === 'done' && t.completed_at);
+    if (!timed.length) return null;
+    const avg = timed.reduce((sum, t) => {
+      return sum + (new Date(t.completed_at!).getTime() - new Date(t.created_at).getTime());
+    }, 0) / timed.length;
+    const hours = avg / (1000 * 60 * 60);
+    return hours < 24 ? `${Math.round(hours)}h` : `${Math.round(hours / 24)}d`;
+  }, [tasks]);
+
   const stats = [
     { label: 'Total', value: tasks.length },
     { label: 'In Progress', value: inProgress },
     { label: 'Completed', value: done },
     { label: 'Completion', value: `${completionRate}%` },
-    { label: 'High Priority', value: highPriority },
+    { label: 'Avg Time', value: avgCompletionHours ?? '—' },
   ];
 
   if (tasks.length === 0) {

@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import TaskCard from '../components/TaskCard';
 import type { Task } from '../types';
 
-const base: Task = { id: '1', user_id: 'u1', title: 'Conquer the north', status: 'todo', priority: 'medium', created_at: '' };
+const base: Task = { id: '1', user_id: 'u1', title: 'Conquer the north', status: 'todo', priority: 'medium', created_at: '', completed_at: null };
 
 describe('TaskCard', () => {
   it('renders task title', () => {

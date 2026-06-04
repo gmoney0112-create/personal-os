@@ -48,9 +48,15 @@ export function useTasks(user: User | null): UseTasksReturn {
   }, []);
 
   const updateTask = useCallback(async (taskId: string, updates: Partial<Pick<Task, 'status' | 'priority'>>) => {
+    const dbUpdates: Partial<Task> = { ...updates };
+    if (updates.status === 'done') {
+      dbUpdates.completed_at = new Date().toISOString();
+    } else if (updates.status !== undefined) {
+      dbUpdates.completed_at = null;
+    }
     const { data, error: err } = await supabase
       .from('tasks')
-      .update(updates)
+      .update(dbUpdates)
       .eq('id', taskId)
       .select();
     if (err) { setError(err.message); return; }

@@ -2,6 +2,7 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
+import { z } from 'zod';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 import type { User } from '@supabase/supabase-js';
@@ -52,6 +53,26 @@ const supabaseAuth = createClient(
 );
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+const Priority = z.enum(['low', 'medium', 'high']);
+const Status = z.enum(['todo', 'in-progress', 'done']);
+
+const CreateTaskSchema = z.object({
+  title: z.string().min(1, 'title is required'),
+  priority: Priority.default('medium'),
+});
+
+const UpdateTaskSchema = z.object({
+  status: Status.optional(),
+  priority: Priority.optional(),
+}).refine(d => d.status !== undefined || d.priority !== undefined, {
+  message: 'No valid fields to update',
+});
+
+const AICommandSchema = z.object({
+  message: z.string().min(1, 'message is required'),
+  tasks: z.array(z.unknown()).default([]),
+});
 
 const AI_TOOLS: Anthropic.Tool[] = [
   {
@@ -107,8 +128,6 @@ async function requireAuth(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-const VALID_PRIORITIES = new Set(['low', 'medium', 'high']);
-
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'Imperial Engine Online', timestamp: new Date().toISOString() });
 });
@@ -132,15 +151,12 @@ app.get('/api/tasks/:userId', requireAuth, async (req: Request, res: Response) =
 });
 
 app.post('/api/tasks', requireAuth, async (req: Request, res: Response) => {
-  const { title, priority = 'medium' } = req.body as { title?: string; priority?: string };
-  if (!title?.trim()) {
-    res.status(400).json({ message: 'title is required' });
+  const parsed = CreateTaskSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ message: parsed.error.issues[0].message });
     return;
   }
-  if (!VALID_PRIORITIES.has(priority)) {
-    res.status(400).json({ message: 'priority must be low, medium, or high' });
-    return;
-  }
+  const { title, priority } = parsed.data;
   const { data, error } = await supabaseAdmin
     .from('tasks')
     .insert([{ user_id: req.user.id, title: title.trim(), priority, status: 'todo' }])
@@ -172,19 +188,16 @@ app.delete('/api/tasks/:taskId', requireAuth, async (req: Request, res: Response
 });
 
 app.patch('/api/tasks/:taskId', requireAuth, async (req: Request, res: Response) => {
-  const { status, priority } = req.body as { status?: string; priority?: string };
-  const updates: Record<string, string> = {};
-  if (status) updates.status = status;
-  if (priority) {
-    if (!VALID_PRIORITIES.has(priority)) {
-      res.status(400).json({ message: 'priority must be low, medium, or high' });
-      return;
-    }
-    updates.priority = priority;
-  }
-  if (Object.keys(updates).length === 0) {
-    res.status(400).json({ message: 'No valid fields to update' });
+  const parsed = UpdateTaskSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ message: parsed.error.issues[0].message });
     return;
+  }
+  const updates: Record<string, string | null> = { ...parsed.data };
+  if (parsed.data.status === 'done') {
+    updates.completed_at = new Date().toISOString();
+  } else if (parsed.data.status !== undefined) {
+    updates.completed_at = null;
   }
 
   const { data: task, error: fetchError } = await supabaseAdmin
@@ -213,11 +226,12 @@ interface AIToolInput { title?: string; priority?: string; taskId?: string; stat
 interface AIAction { type: 'created' | 'updated' | 'deleted'; task?: TaskRow; taskId?: string }
 
 app.post('/api/ai/command', aiLimiter, requireAuth, async (req: Request, res: Response) => {
-  const { message, tasks = [] } = req.body as { message?: string; tasks?: TaskRow[] };
-  if (!message?.trim()) {
-    res.status(400).json({ message: 'message is required' });
+  const parsed = AICommandSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ message: parsed.error.issues[0].message });
     return;
   }
+  const { message, tasks } = parsed.data as { message: string; tasks: TaskRow[] };
 
   const taskList = tasks.length
     ? tasks.map(t => `- [${t.id}] "${t.title}" | priority: ${t.priority} | status: ${t.status}`).join('\n')
