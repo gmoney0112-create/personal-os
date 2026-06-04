@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 import { useTasks } from './hooks/useTasks';
 import LoginScreen from './components/LoginScreen';
 import TaskInput from './components/TaskInput';
 import TaskList from './components/TaskList';
+import AICommandBar from './components/AICommandBar';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
+
+type View = 'tasks' | 'analytics';
 
 export default function App() {
-  const [user, setUser] = useState(null);
-  const { tasks, loading, error, addTask, deleteTask, updateTask } = useTasks(user);
+  const [user, setUser] = useState<User | null>(null);
+  const [view, setView] = useState<View>('tasks');
+  const { tasks, loading, error, addTask, deleteTask, updateTask, refetch } = useTasks(user);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -29,7 +35,20 @@ export default function App() {
         <h1 className="text-3xl font-bold text-yellow-500">
           Personal OS <span className="text-white text-sm font-light ml-2">v1.0</span>
         </h1>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
+          <nav className="flex gap-1">
+            {(['tasks', 'analytics'] as View[]).map(v => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`text-xs uppercase tracking-widest px-3 py-1 rounded transition-all ${
+                  view === v ? 'text-yellow-500 border border-yellow-700' : 'text-gray-500 hover:text-white'
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </nav>
           <span className="text-gray-400 text-sm">{user.email}</span>
           <button
             onClick={() => supabase.auth.signOut()}
@@ -41,14 +60,21 @@ export default function App() {
       </header>
 
       <main className="max-w-4xl mx-auto">
-        <TaskInput onAdd={addTask} />
-        <TaskList
-          tasks={tasks}
-          loading={loading}
-          error={error}
-          onDelete={deleteTask}
-          onUpdate={updateTask}
-        />
+        {view === 'tasks' ? (
+          <>
+            <AICommandBar tasks={tasks} onTasksChanged={refetch} />
+            <TaskInput onAdd={addTask} />
+            <TaskList
+              tasks={tasks}
+              loading={loading}
+              error={error}
+              onDelete={deleteTask}
+              onUpdate={updateTask}
+            />
+          </>
+        ) : (
+          <AnalyticsDashboard tasks={tasks} />
+        )}
       </main>
     </div>
   );

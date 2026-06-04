@@ -9,12 +9,12 @@ describe('TaskInput', () => {
     expect(screen.getByRole('button', { name: /execute/i })).toBeInTheDocument();
   });
 
-  it('calls onAdd with trimmed value on button click', async () => {
+  it('calls onAdd with trimmed value and default priority on button click', async () => {
     const onAdd = vi.fn();
     render(<TaskInput onAdd={onAdd} />);
     await userEvent.type(screen.getByRole('textbox'), '  Build empire  ');
     fireEvent.click(screen.getByRole('button', { name: /execute/i }));
-    expect(onAdd).toHaveBeenCalledWith('Build empire');
+    expect(onAdd).toHaveBeenCalledWith('Build empire', 'medium');
   });
 
   it('clears input after submit', async () => {
@@ -30,7 +30,7 @@ describe('TaskInput', () => {
     const onAdd = vi.fn();
     render(<TaskInput onAdd={onAdd} />);
     await userEvent.type(screen.getByRole('textbox'), 'Keyboard task{Enter}');
-    expect(onAdd).toHaveBeenCalledWith('Keyboard task');
+    expect(onAdd).toHaveBeenCalledWith('Keyboard task', 'medium');
   });
 
   it('does not call onAdd for empty input', () => {

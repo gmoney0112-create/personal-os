@@ -1,7 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import TaskCard from '../components/TaskCard';
+import type { Task } from '../types';
 
-const base = { id: '1', title: 'Conquer the north', status: 'todo', priority: 'medium' };
+const base: Task = { id: '1', user_id: 'u1', title: 'Conquer the north', status: 'todo', priority: 'medium', created_at: '', completed_at: null };
 
 describe('TaskCard', () => {
   it('renders task title', () => {
@@ -53,7 +54,8 @@ describe('TaskCard', () => {
   });
 
   it('falls back to medium border for unknown priority', () => {
-    const { container } = render(<TaskCard task={{ ...base, priority: undefined }} onDelete={() => {}} onUpdate={() => {}} />);
+    const task = { ...base, priority: undefined as unknown as Task['priority'] };
+    const { container } = render(<TaskCard task={task} onDelete={() => {}} onUpdate={() => {}} />);
     expect(container.firstChild).toHaveClass('border-yellow-600');
   });
 });
