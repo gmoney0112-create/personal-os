@@ -1,8 +1,28 @@
-const PRIORITY_BORDER = { high: 'border-red-500', medium: 'border-yellow-600', low: 'border-gray-600' };
-const STATUS_CYCLE = { todo: 'in-progress', 'in-progress': 'done', done: 'todo' };
-const PRIORITY_CYCLE = { low: 'medium', medium: 'high', high: 'low' };
+import type { Task, TaskStatus, TaskPriority } from '../types';
 
-export default function TaskCard({ task, onDelete, onUpdate }) {
+const PRIORITY_BORDER: Record<TaskPriority, string> = {
+  high: 'border-red-500',
+  medium: 'border-yellow-600',
+  low: 'border-gray-600',
+};
+const STATUS_CYCLE: Record<TaskStatus, TaskStatus> = {
+  todo: 'in-progress',
+  'in-progress': 'done',
+  done: 'todo',
+};
+const PRIORITY_CYCLE: Record<TaskPriority, TaskPriority> = {
+  low: 'medium',
+  medium: 'high',
+  high: 'low',
+};
+
+interface Props {
+  task: Task;
+  onDelete: (id: string) => void;
+  onUpdate: (id: string, updates: Partial<Pick<Task, 'status' | 'priority'>>) => void;
+}
+
+export default function TaskCard({ task, onDelete, onUpdate }: Props) {
   const border = PRIORITY_BORDER[task.priority] ?? PRIORITY_BORDER.medium;
 
   return (
@@ -11,7 +31,7 @@ export default function TaskCard({ task, onDelete, onUpdate }) {
       <div className="flex items-center gap-2">
         {task.priority && (
           <button
-            onClick={() => onUpdate(task.id, { priority: PRIORITY_CYCLE[task.priority] ?? 'medium' })}
+            onClick={() => onUpdate(task.id, { priority: PRIORITY_CYCLE[task.priority] })}
             className="text-xs uppercase text-gray-600 px-2 py-1 hover:text-yellow-500 transition-all"
             title="Click to cycle priority"
           >

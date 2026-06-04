@@ -1,8 +1,13 @@
 import { useState } from 'react';
+import type { TaskPriority } from '../types';
 
-export default function TaskInput({ onAdd }) {
+interface Props {
+  onAdd: (title: string, priority: TaskPriority) => void;
+}
+
+export default function TaskInput({ onAdd }: Props) {
   const [value, setValue] = useState('');
-  const [priority, setPriority] = useState('medium');
+  const [priority, setPriority] = useState<TaskPriority>('medium');
 
   const handleAdd = () => {
     if (!value.trim()) return;
@@ -22,7 +27,7 @@ export default function TaskInput({ onAdd }) {
       />
       <select
         value={priority}
-        onChange={(e) => setPriority(e.target.value)}
+        onChange={(e) => setPriority(e.target.value as TaskPriority)}
         className="bg-[#141414] border border-gray-800 px-3 rounded-lg text-gray-400 text-xs uppercase tracking-widest focus:border-yellow-500 outline-none"
       >
         <option value="low">Low</option>

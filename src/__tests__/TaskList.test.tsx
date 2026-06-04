@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import TaskList from '../components/TaskList';
+import type { Task } from '../types';
 
-const tasks = [
-  { id: '1', title: 'Task Alpha', status: 'todo', priority: 'high' },
-  { id: '2', title: 'Task Beta', status: 'done', priority: 'low' },
+const tasks: Task[] = [
+  { id: '1', user_id: 'u1', title: 'Task One', status: 'todo', priority: 'high', created_at: '' },
+  { id: '2', user_id: 'u1', title: 'Task Two', status: 'done', priority: 'low', created_at: '' },
 ];
 
 describe('TaskList', () => {
@@ -13,24 +14,23 @@ describe('TaskList', () => {
   });
 
   it('shows error state', () => {
-    render(<TaskList tasks={[]} loading={false} error="Connection failed" onDelete={() => {}} onUpdate={() => {}} />);
-    expect(screen.getByText(/Connection failed/i)).toBeInTheDocument();
+    render(<TaskList tasks={[]} loading={false} error="DB error" onDelete={() => {}} onUpdate={() => {}} />);
+    expect(screen.getByText(/DB error/i)).toBeInTheDocument();
   });
 
-  it('shows empty state when no tasks', () => {
+  it('shows empty state', () => {
     render(<TaskList tasks={[]} loading={false} error={null} onDelete={() => {}} onUpdate={() => {}} />);
     expect(screen.getByText(/no directives/i)).toBeInTheDocument();
   });
 
-  it('renders all task titles', () => {
+  it('renders all tasks', () => {
     render(<TaskList tasks={tasks} loading={false} error={null} onDelete={() => {}} onUpdate={() => {}} />);
-    expect(screen.getByText('Task Alpha')).toBeInTheDocument();
-    expect(screen.getByText('Task Beta')).toBeInTheDocument();
+    expect(screen.getByText('Task One')).toBeInTheDocument();
+    expect(screen.getByText('Task Two')).toBeInTheDocument();
   });
 
-  it('does not render loading or error when tasks are present', () => {
+  it('renders correct number of task cards', () => {
     render(<TaskList tasks={tasks} loading={false} error={null} onDelete={() => {}} onUpdate={() => {}} />);
-    expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/error/i)).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /delete task/i })).toHaveLength(2);
   });
 });

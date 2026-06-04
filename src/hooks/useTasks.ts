@@ -1,10 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import type { Task, TaskPriority } from '../types';
 
-export function useTasks(user) {
-  const [tasks, setTasks] = useState([]);
+interface UseTasksReturn {
+  tasks: Task[];
+  loading: boolean;
+  error: string | null;
+  addTask: (title: string, priority?: TaskPriority) => Promise<void>;
+  deleteTask: (taskId: string) => Promise<void>;
+  updateTask: (taskId: string, updates: Partial<Pick<Task, 'status' | 'priority'>>) => Promise<void>;
+  refetch: () => Promise<void>;
+}
+
+export function useTasks(user: User | null): UseTasksReturn {
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchTasks = useCallback(async () => {
     if (!user) return;
@@ -16,11 +28,11 @@ export function useTasks(user) {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
     if (err) setError(err.message);
-    else setTasks(data ?? []);
+    else setTasks((data as Task[]) ?? []);
     setLoading(false);
   }, [user]);
 
-  const addTask = useCallback(async (title, priority = 'medium') => {
+  const addTask = useCallback(async (title: string, priority: TaskPriority = 'medium') => {
     if (!title?.trim() || !user) return;
     const { error: err } = await supabase
       .from('tasks')
@@ -29,20 +41,20 @@ export function useTasks(user) {
     await fetchTasks();
   }, [user, fetchTasks]);
 
-  const deleteTask = useCallback(async (taskId) => {
+  const deleteTask = useCallback(async (taskId: string) => {
     const { error: err } = await supabase.from('tasks').delete().eq('id', taskId);
     if (err) { setError(err.message); return; }
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
   }, []);
 
-  const updateTask = useCallback(async (taskId, updates) => {
+  const updateTask = useCallback(async (taskId: string, updates: Partial<Pick<Task, 'status' | 'priority'>>) => {
     const { data, error: err } = await supabase
       .from('tasks')
       .update(updates)
       .eq('id', taskId)
       .select();
     if (err) { setError(err.message); return; }
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? data[0] : t)));
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? (data as Task[])[0] : t)));
   }, []);
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);

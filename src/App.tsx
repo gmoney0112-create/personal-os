@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 import { useTasks } from './hooks/useTasks';
 import LoginScreen from './components/LoginScreen';
@@ -7,9 +8,11 @@ import TaskList from './components/TaskList';
 import AICommandBar from './components/AICommandBar';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
 
+type View = 'tasks' | 'analytics';
+
 export default function App() {
-  const [user, setUser] = useState(null);
-  const [view, setView] = useState('tasks');
+  const [user, setUser] = useState<User | null>(null);
+  const [view, setView] = useState<View>('tasks');
   const { tasks, loading, error, addTask, deleteTask, updateTask, refetch } = useTasks(user);
 
   useEffect(() => {
@@ -34,7 +37,7 @@ export default function App() {
         </h1>
         <div className="flex items-center gap-6">
           <nav className="flex gap-1">
-            {['tasks', 'analytics'].map(v => (
+            {(['tasks', 'analytics'] as View[]).map(v => (
               <button
                 key={v}
                 onClick={() => setView(v)}

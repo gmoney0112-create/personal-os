@@ -1,12 +1,23 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import type { Task } from '../types';
 
-export default function AICommandBar({ tasks, onTasksChanged }) {
+interface Props {
+  tasks: Task[];
+  onTasksChanged: () => void;
+}
+
+interface AIResponse {
+  response: string;
+  actions: unknown[];
+}
+
+export default function AICommandBar({ tasks, onTasksChanged }: Props) {
   const [input, setInput] = useState('');
   const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!input.trim() || loading) return;
 
@@ -19,18 +30,18 @@ export default function AICommandBar({ tasks, onTasksChanged }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${session?.access_token ?? ''}`,
         },
-        body: JSON.stringify({ message: input, tasks })
+        body: JSON.stringify({ message: input, tasks }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      const data: AIResponse = await res.json() as AIResponse;
+      if (!res.ok) throw new Error((data as { message?: string }).message ?? 'Request failed');
 
       setResponse(data.response);
       if (data.actions?.length > 0) onTasksChanged();
     } catch (err) {
-      setResponse(`Error: ${err.message}`);
+      setResponse(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
       setInput('');
@@ -46,7 +57,7 @@ export default function AICommandBar({ tasks, onTasksChanged }) {
       <form onSubmit={handleSubmit} className="flex gap-2">
         <input
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={(e) => setInput(e.target.value)}
           placeholder='Try: "Add high priority task: review Q3 report" or "What should I focus on?"'
           className="flex-1 bg-[#0D0D0D] border border-yellow-900 text-white placeholder-gray-600 px-4 py-2 rounded text-sm focus:outline-none focus:border-yellow-600"
           disabled={loading}

@@ -3,28 +3,43 @@ import {
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
 } from 'recharts';
+import type { Task, TaskStatus, TaskPriority } from '../types';
 
-const STATUS_COLORS = { todo: '#6B7280', 'in-progress': '#EAB308', done: '#22C55E' };
-const PRIORITY_COLORS = { high: '#EF4444', medium: '#EAB308', low: '#6B7280' };
+const STATUS_COLORS: Record<TaskStatus, string> = {
+  todo: '#6B7280',
+  'in-progress': '#EAB308',
+  done: '#22C55E',
+};
+const PRIORITY_COLORS: Record<TaskPriority, string> = {
+  high: '#EF4444',
+  medium: '#EAB308',
+  low: '#6B7280',
+};
 
 const tooltipStyle = { background: '#141414', border: '1px solid #78350f', color: '#fff', fontSize: 12 };
-const legendFormatter = v => <span style={{ color: '#9CA3AF', fontSize: 11, textTransform: 'uppercase' }}>{v}</span>;
+const legendFormatter = (v: string) => (
+  <span style={{ color: '#9CA3AF', fontSize: 11, textTransform: 'uppercase' as const }}>{v}</span>
+);
 
-export default function AnalyticsDashboard({ tasks }) {
+interface Props {
+  tasks: Task[];
+}
+
+export default function AnalyticsDashboard({ tasks }: Props) {
   const statusData = useMemo(() => {
-    const counts = { todo: 0, 'in-progress': 0, done: 0 };
+    const counts: Record<TaskStatus, number> = { todo: 0, 'in-progress': 0, done: 0 };
     tasks.forEach(t => { if (t.status in counts) counts[t.status]++; });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [tasks]);
 
   const priorityData = useMemo(() => {
-    const counts = { high: 0, medium: 0, low: 0 };
+    const counts: Record<TaskPriority, number> = { high: 0, medium: 0, low: 0 };
     tasks.forEach(t => { if (t.priority in counts) counts[t.priority]++; });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [tasks]);
 
   const timelineData = useMemo(() => {
-    const days = {};
+    const days: Record<string, number> = {};
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
@@ -76,7 +91,7 @@ export default function AnalyticsDashboard({ tasks }) {
             <PieChart>
               <Pie data={statusData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={2}>
                 {statusData.map(entry => (
-                  <Cell key={entry.name} fill={STATUS_COLORS[entry.name]} />
+                  <Cell key={entry.name} fill={STATUS_COLORS[entry.name as TaskStatus]} />
                 ))}
               </Pie>
               <Tooltip contentStyle={tooltipStyle} />
@@ -91,7 +106,7 @@ export default function AnalyticsDashboard({ tasks }) {
             <PieChart>
               <Pie data={priorityData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={2}>
                 {priorityData.map(entry => (
-                  <Cell key={entry.name} fill={PRIORITY_COLORS[entry.name]} />
+                  <Cell key={entry.name} fill={PRIORITY_COLORS[entry.name as TaskPriority]} />
                 ))}
               </Pie>
               <Tooltip contentStyle={tooltipStyle} />

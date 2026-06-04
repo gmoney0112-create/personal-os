@@ -1,13 +1,17 @@
-import { Component } from 'react';
+import { Component, type PropsWithChildren } from 'react';
 
-export default class ErrorBoundary extends Component {
-  state = { error: null };
+interface State {
+  error: Error | null;
+}
 
-  static getDerivedStateFromError(error) {
+export default class ErrorBoundary extends Component<PropsWithChildren, State> {
+  state: State = { error: null };
+
+  static getDerivedStateFromError(error: Error): State {
     return { error };
   }
 
-  componentDidCatch(error, info) {
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('ErrorBoundary caught:', error, info.componentStack);
   }
 
