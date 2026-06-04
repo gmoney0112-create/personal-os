@@ -8,9 +8,9 @@ const tasks: Task[] = [
 ];
 
 describe('TaskList', () => {
-  it('shows loading state', () => {
-    render(<TaskList tasks={[]} loading={true} error={null} onDelete={() => {}} onUpdate={() => {}} />);
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+  it('shows loading skeleton', () => {
+    const { container } = render(<TaskList tasks={[]} loading={true} error={null} onDelete={() => {}} onUpdate={() => {}} />);
+    expect(container.querySelectorAll('.animate-pulse')).toHaveLength(3);
   });
 
   it('shows error state', () => {
