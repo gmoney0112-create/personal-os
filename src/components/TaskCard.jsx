@@ -1,5 +1,6 @@
 const PRIORITY_BORDER = { high: 'border-red-500', medium: 'border-yellow-600', low: 'border-gray-600' };
 const STATUS_CYCLE = { todo: 'in-progress', 'in-progress': 'done', done: 'todo' };
+const PRIORITY_CYCLE = { low: 'medium', medium: 'high', high: 'low' };
 
 export default function TaskCard({ task, onDelete, onUpdate }) {
   const border = PRIORITY_BORDER[task.priority] ?? PRIORITY_BORDER.medium;
@@ -9,7 +10,13 @@ export default function TaskCard({ task, onDelete, onUpdate }) {
       <span className="text-lg flex-1">{task.title}</span>
       <div className="flex items-center gap-2">
         {task.priority && (
-          <span className="text-xs uppercase text-gray-600 px-2 py-1">{task.priority}</span>
+          <button
+            onClick={() => onUpdate(task.id, { priority: PRIORITY_CYCLE[task.priority] ?? 'medium' })}
+            className="text-xs uppercase text-gray-600 px-2 py-1 hover:text-yellow-500 transition-all"
+            title="Click to cycle priority"
+          >
+            {task.priority}
+          </button>
         )}
         <button
           onClick={() => onUpdate(task.id, { status: STATUS_CYCLE[task.status] ?? 'todo' })}

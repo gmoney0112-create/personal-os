@@ -20,11 +20,11 @@ export function useTasks(user) {
     setLoading(false);
   }, [user]);
 
-  const addTask = useCallback(async (title) => {
+  const addTask = useCallback(async (title, priority = 'medium') => {
     if (!title?.trim() || !user) return;
     const { error: err } = await supabase
       .from('tasks')
-      .insert([{ user_id: user.id, title: title.trim(), status: 'todo', priority: 'medium' }]);
+      .insert([{ user_id: user.id, title: title.trim(), status: 'todo', priority }]);
     if (err) { setError(err.message); return; }
     await fetchTasks();
   }, [user, fetchTasks]);
