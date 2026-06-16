@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Task } from '../types';
 
 interface Props {
-  tasks: Task[];
   onTasksChanged: () => void;
 }
 
@@ -12,7 +10,11 @@ interface AIResponse {
   actions: unknown[];
 }
 
-export default function AICommandBar({ tasks, onTasksChanged }: Props) {
+// C-1: `tasks` prop removed — the server now fetches tasks directly from
+// Supabase using the authenticated user's identity, eliminating the prompt
+// injection attack surface that existed when task content was supplied by
+// the client and interpolated verbatim into the AI system prompt.
+export default function AICommandBar({ onTasksChanged }: Props) {
   const [input, setInput] = useState('');
   const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,14 +42,23 @@ export default function AICommandBar({ tasks, onTasksChanged }: Props) {
     setResponse('');
 
     try {
+      // H-4: Use getUser() instead of getSession(). getSession() returns the
+      // locally-cached session without re-validating against Supabase, meaning
+      // a stale or tampered token can be used silently. getUser() verifies server-side.
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw new Error('Not authenticated');
+
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('No active session');
+
       const res = await fetch('/api/ai/command', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token ?? ''}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ message: input, tasks }),
+        // C-1: Only send the user's message — no task data from the client.
+        body: JSON.stringify({ message: input }),
         signal: controller.signal,
       });
 

@@ -64,13 +64,18 @@ export function useTasks(user: User | null): UseTasksReturn {
     await fetchTasks();
   }, [user, fetchTasks]);
 
+  // H-2: Filter by both `id` AND `user_id` — defense in depth against a
+  // misconfigured RLS policy allowing cross-user mutations.
   const deleteTask = useCallback(async (taskId: string) => {
-    const { error: err } = await supabase.from('tasks').delete().eq('id', taskId);
+    if (!user) return;
+    const { error: err } = await supabase.from('tasks').delete().eq('id', taskId).eq('user_id', user.id);
     if (err) { setError(err.message); return; }
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
-  }, []);
+  }, [user]);
 
+  // H-2: Same defense-in-depth user_id scoping applied to updates.
   const updateTask = useCallback(async (taskId: string, updates: Partial<Pick<Task, 'status' | 'priority'>>) => {
+    if (!user) return;
     // INVARIANT: completed_at is managed in two places:
     //   1. Here — for the direct-client Supabase path (RLS-protected).
     //   2. server.ts PATCH /api/tasks/:taskId — for the server-side path used by the AI command bar.
@@ -86,10 +91,11 @@ export function useTasks(user: User | null): UseTasksReturn {
       .from('tasks')
       .update(dbUpdates)
       .eq('id', taskId)
+      .eq('user_id', user.id)
       .select();
     if (err) { setError(err.message); return; }
     setTasks((prev) => prev.map((t) => (t.id === taskId ? (data as Task[])[0] : t)));
-  }, []);
+  }, [user]);
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 

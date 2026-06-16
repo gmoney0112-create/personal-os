@@ -62,7 +62,7 @@ export default function App() {
       <main className="max-w-4xl mx-auto">
         {view === 'tasks' ? (
           <>
-            <AICommandBar tasks={tasks} onTasksChanged={refetch} />
+            <AICommandBar onTasksChanged={refetch} />
             <TaskInput onAdd={addTask} />
             <TaskList
               tasks={tasks}
