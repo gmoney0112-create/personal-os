@@ -1,7 +1,10 @@
 import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 import { z } from 'zod';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
@@ -20,9 +23,43 @@ declare global {
 const app = express();
 const PORT = process.env.PORT ?? 3001;
 
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') ?? ['http://localhost:5173'];
+// H-3: Fail fast — no silent localhost fallback in production
+const rawAllowedOrigins = process.env.ALLOWED_ORIGINS;
+if (!rawAllowedOrigins && process.env.NODE_ENV === 'production') {
+  console.error('FATAL: ALLOWED_ORIGINS env var is required in production');
+  process.exit(1);
+}
+const ALLOWED_ORIGINS = rawAllowedOrigins?.split(',') ?? ['http://localhost:5173'];
 app.use(cors({ origin: ALLOWED_ORIGINS }));
-app.use(express.json());
+// M-3: HTTP security headers (X-Content-Type-Options, X-Frame-Options, etc.)
+app.use(helmet());
+// Prevent oversized request bodies
+app.use(express.json({ limit: '64kb' }));
+
+// M-2: Redis-backed rate limiter that survives Vercel cold starts.
+// Falls back silently to in-memory express-rate-limit when Upstash is not configured (local dev).
+const upstashAiRateLimit = (() => {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  return new Ratelimit({
+    redis: new Redis({ url, token }),
+    limiter: Ratelimit.slidingWindow(20, '15 m'),
+    prefix: 'personal-os:ai',
+  });
+})();
+
+async function upstashAiLimit(req: Request, res: Response, next: NextFunction) {
+  if (!upstashAiRateLimit) { next(); return; }
+  try {
+    const { success } = await upstashAiRateLimit.limit(req.user.id);
+    if (!success) {
+      res.status(429).json({ message: 'AI command limit reached, please wait before trying again.' });
+      return;
+    }
+  } catch { /* fail open — express-rate-limit below still guards */ }
+  next();
+}
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -57,8 +94,9 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const Priority = z.enum(['low', 'medium', 'high']);
 const Status = z.enum(['todo', 'in-progress', 'done']);
 
+// M-1: Added .max(500) to title to prevent oversized DB writes / prompt flooding
 const CreateTaskSchema = z.object({
-  title: z.string().min(1, 'title is required'),
+  title: z.string().min(1, 'title is required').max(500, 'title must be 500 characters or fewer').trim(),
   priority: Priority.default('medium'),
 });
 
@@ -69,9 +107,10 @@ const UpdateTaskSchema = z.object({
   message: 'No valid fields to update',
 });
 
+// C-1: Removed `tasks` from the client schema — the server fetches tasks itself
+// to eliminate the prompt injection attack surface.
 const AICommandSchema = z.object({
-  message: z.string().min(1, 'message is required'),
-  tasks: z.array(z.unknown()).default([]),
+  message: z.string().min(1, 'message is required').max(2000, 'message must be 2000 characters or fewer'),
 });
 
 const AI_TOOLS: Anthropic.Tool[] = [
@@ -225,14 +264,30 @@ interface TaskRow { id: string; title: string; priority: string; status: string;
 interface AIToolInput { title?: string; priority?: string; taskId?: string; status?: string }
 interface AIAction { type: 'created' | 'updated' | 'deleted'; task?: TaskRow; taskId?: string }
 
-app.post('/api/ai/command', aiLimiter, requireAuth, async (req: Request, res: Response) => {
+app.post('/api/ai/command', aiLimiter, requireAuth, upstashAiLimit, async (req: Request, res: Response) => {
   const parsed = AICommandSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ message: parsed.error.issues[0].message });
     return;
   }
-  const { message, tasks } = parsed.data as { message: string; tasks: TaskRow[] };
+  const { message } = parsed.data;
 
+  // C-1: Fetch tasks server-side using the verified user identity.
+  // This eliminates the prompt injection vector that existed when the client
+  // supplied task content directly into the system prompt.
+  const { data: userTasks, error: tasksError } = await supabaseAdmin
+    .from('tasks')
+    .select('id, title, priority, status')
+    .eq('user_id', req.user.id)
+    .order('created_at', { ascending: false });
+
+  if (tasksError) {
+    console.error('AI command — task fetch:', tasksError.message);
+    res.status(500).json({ message: 'Failed to load tasks for AI context' });
+    return;
+  }
+
+  const tasks = (userTasks as TaskRow[]) ?? [];
   const taskList = tasks.length
     ? tasks.map(t => `- [${t.id}] "${t.title}" | priority: ${t.priority} | status: ${t.status}`).join('\n')
     : 'No tasks yet.';
@@ -264,20 +319,32 @@ ${taskList}`;
         const { name, input } = block;
         const inp = input as AIToolInput;
 
-        if (name === 'create_task' && inp.title && inp.priority) {
-          const { data, error } = await supabaseAdmin
-            .from('tasks')
-            .insert([{ user_id: req.user.id, title: inp.title.trim(), priority: inp.priority, status: 'todo' }])
-            .select();
-          if (!error) actions.push({ type: 'created', task: (data as TaskRow[])[0] });
+        if (name === 'create_task') {
+          // C-2: Validate AI-supplied tool inputs through the same schema as the REST endpoint
+          const createParsed = CreateTaskSchema.safeParse({ title: inp.title, priority: inp.priority });
+          if (createParsed.success) {
+            const { data, error } = await supabaseAdmin
+              .from('tasks')
+              .insert([{ user_id: req.user.id, title: createParsed.data.title, priority: createParsed.data.priority, status: 'todo' }])
+              .select();
+            if (!error) actions.push({ type: 'created', task: (data as TaskRow[])[0] });
+          }
         } else if (name === 'update_task' && inp.taskId) {
-          const { data: existing } = await supabaseAdmin.from('tasks').select('user_id').eq('id', inp.taskId).single();
-          if ((existing as { user_id: string } | null)?.user_id === req.user.id) {
-            const updates: Record<string, string> = {};
-            if (inp.status) updates.status = inp.status;
-            if (inp.priority) updates.priority = inp.priority;
-            const { data } = await supabaseAdmin.from('tasks').update(updates).eq('id', inp.taskId).select();
-            if (data?.[0]) actions.push({ type: 'updated', task: (data as TaskRow[])[0] });
+          // C-2: Validate AI-supplied update fields through the same schema as the REST endpoint
+          const updateParsed = UpdateTaskSchema.safeParse({ status: inp.status, priority: inp.priority });
+          if (updateParsed.success) {
+            const { data: existing } = await supabaseAdmin.from('tasks').select('user_id').eq('id', inp.taskId).single();
+            if ((existing as { user_id: string } | null)?.user_id === req.user.id) {
+              const updates: Record<string, string | null> = { ...updateParsed.data };
+              // H-1: Keep completed_at consistent with the REST PATCH handler
+              if (updateParsed.data.status === 'done') {
+                updates.completed_at = new Date().toISOString();
+              } else if (updateParsed.data.status !== undefined) {
+                updates.completed_at = null;
+              }
+              const { data } = await supabaseAdmin.from('tasks').update(updates).eq('id', inp.taskId).select();
+              if (data?.[0]) actions.push({ type: 'updated', task: (data as TaskRow[])[0] });
+            }
           }
         } else if (name === 'delete_task' && inp.taskId) {
           const { data: existing } = await supabaseAdmin.from('tasks').select('user_id').eq('id', inp.taskId).single();

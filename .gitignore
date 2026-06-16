@@ -8,3 +8,4 @@ dist/
 .vite/
 coverage/
 .vercel/
+.claude/worktrees/
