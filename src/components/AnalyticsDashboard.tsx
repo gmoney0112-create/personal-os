@@ -77,8 +77,14 @@ export default function AnalyticsDashboard({ tasks }: Props) {
 
   if (tasks.length === 0) {
     return (
-      <div className="text-center text-gray-600 py-20 text-xs uppercase tracking-widest">
-        No data yet — add tasks to see analytics
+      <div className="flex flex-col items-center justify-center py-32 gap-3">
+        <span className="text-yellow-900 text-4xl">&#9733;</span>
+        <p className="text-yellow-700 text-xs uppercase tracking-[0.3em] font-bold">
+          NO DATA IN THE ARCHIVE
+        </p>
+        <p className="text-gray-600 text-xs uppercase tracking-widest mt-1">
+          Add tasks to populate the command intelligence
+        </p>
       </div>
     );
   }

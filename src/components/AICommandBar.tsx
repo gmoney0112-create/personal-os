@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Task } from '../types';
 
@@ -17,9 +17,24 @@ export default function AICommandBar({ tasks, onTasksChanged }: Props) {
   const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Guard against setState calls after the component unmounts mid-request.
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      // Cancel any in-flight fetch when the component unmounts.
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!input.trim() || loading) return;
+
+    // Abort any previous in-flight request before starting a new one.
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     setLoading(true);
     setResponse('');
@@ -33,6 +48,7 @@ export default function AICommandBar({ tasks, onTasksChanged }: Props) {
           'Authorization': `Bearer ${session?.access_token ?? ''}`,
         },
         body: JSON.stringify({ message: input, tasks }),
+        signal: controller.signal,
       });
 
       const data: AIResponse = await res.json() as AIResponse;
@@ -41,10 +57,15 @@ export default function AICommandBar({ tasks, onTasksChanged }: Props) {
       setResponse(data.response);
       if (data.actions?.length > 0) onTasksChanged();
     } catch (err) {
+      // Silently ignore aborts triggered by unmount or a new submission.
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       setResponse(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
-      setLoading(false);
-      setInput('');
+      // Only update loading state if this request was not superseded/aborted.
+      if (!controller.signal.aborted) {
+        setLoading(false);
+        setInput('');
+      }
     }
   }
 
