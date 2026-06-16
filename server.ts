@@ -1,7 +1,10 @@
 import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 import { z } from 'zod';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
@@ -28,9 +31,35 @@ if (!rawAllowedOrigins && process.env.NODE_ENV === 'production') {
 }
 const ALLOWED_ORIGINS = rawAllowedOrigins?.split(',') ?? ['http://localhost:5173'];
 app.use(cors({ origin: ALLOWED_ORIGINS }));
-
+// M-3: HTTP security headers (X-Content-Type-Options, X-Frame-Options, etc.)
+app.use(helmet());
 // Prevent oversized request bodies
 app.use(express.json({ limit: '64kb' }));
+
+// M-2: Redis-backed rate limiter that survives Vercel cold starts.
+// Falls back silently to in-memory express-rate-limit when Upstash is not configured (local dev).
+const upstashAiRateLimit = (() => {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  return new Ratelimit({
+    redis: new Redis({ url, token }),
+    limiter: Ratelimit.slidingWindow(20, '15 m'),
+    prefix: 'personal-os:ai',
+  });
+})();
+
+async function upstashAiLimit(req: Request, res: Response, next: NextFunction) {
+  if (!upstashAiRateLimit) { next(); return; }
+  try {
+    const { success } = await upstashAiRateLimit.limit(req.user.id);
+    if (!success) {
+      res.status(429).json({ message: 'AI command limit reached, please wait before trying again.' });
+      return;
+    }
+  } catch { /* fail open — express-rate-limit below still guards */ }
+  next();
+}
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -235,7 +264,7 @@ interface TaskRow { id: string; title: string; priority: string; status: string;
 interface AIToolInput { title?: string; priority?: string; taskId?: string; status?: string }
 interface AIAction { type: 'created' | 'updated' | 'deleted'; task?: TaskRow; taskId?: string }
 
-app.post('/api/ai/command', aiLimiter, requireAuth, async (req: Request, res: Response) => {
+app.post('/api/ai/command', aiLimiter, requireAuth, upstashAiLimit, async (req: Request, res: Response) => {
   const parsed = AICommandSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ message: parsed.error.issues[0].message });
