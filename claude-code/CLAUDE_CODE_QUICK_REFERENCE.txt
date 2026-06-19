@@ -1,0 +1,178 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║         CLAUDE CODE QUICK-START CARD | Kingdom Systems AI Agency             ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─ THE 7 STEPS (Do These Once) ──────────────────────────────────────────────┐
+│                                                                              │
+│  1  mkdir ~/ClaudeCode/KingdomSystems                                        │
+│       Point Claude Code here. Nowhere else.                                  │
+│                                                                              │
+│  2  Settings → Claude Code → "Allow bypass permissions mode" → ON           │
+│       No more clicking "allow" 30 times.                                     │
+│                                                                              │
+│  3  Settings → Connectors → Add Netlify + Supabase (free, do it once)       │
+│       One-time plumbing. Done forever.                                       │
+│                                                                              │
+│  4  Bottom Right → Opus 4.8 + Effort High                                   │
+│       Only model that actually builds. Cost: $0.30-0.50/run.                │
+│                                                                              │
+│  5  PASTE THE MEGA-PROMPT (from MEGA_PROMPT.txt) ← KEY                      │
+│       This one prompt does more than steps 1-4 combined.                    │
+│                                                                              │
+│  6  claude.com/download → Get Pro ($20/month) → Open Code tab               │
+│       This is the app. Budget $100-200/month for production use.             │
+│                                                                              │
+│  7  Click + → Select folder from Step 1 → ASK YOUR FIRST QUESTION           │
+│       Now you're live. Build something.                                      │
+│                                                                              │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ PROJECT LAUNCH TEMPLATE (Same Every Time) ────────────────────────────────┐
+│                                                                              │
+│  Open Claude Code                                                            │
+│       ↓                                                                      │
+│  Create folder: ~/ClaudeCode/KingdomSystems/[PROJECT_NAME]/                 │
+│       ↓                                                                      │
+│  Ask:                                                                        │
+│  "Build me a [Agent Type] for [Client Name]. Intake data:                   │
+│   [Paste your JSON sample]"                                                  │
+│       ↓                                                                      │
+│  Claude Code builds it (10-15 min)                                           │
+│       ↓                                                                      │
+│  Deploy to Netlify (1 click)                                                 │
+│       ↓                                                                      │
+│  Send client live URL                                                        │
+│       ↓                                                                      │
+│  REVENUE (Bill $2K-15K depending on agent type)                              │
+│                                                                              │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ THE 4 AGENT TYPES (Pick One Per Client Sprint) ─────────────────────────┐
+│                                                                              │
+│  LEAD QUALIFIER AGENT          Build Time: 3-4 hours                        │
+│     What: Phone/email intake → score → route to GHL                         │
+│     Revenue: $2,000-2,500 per agent                                          │
+│     Fastest Path to Revenue. START HERE.                                     │
+│                                                                              │
+│  APPOINTMENT SCHEDULER AGENT   Build Time: 2-3 days                         │
+│     What: Calendar sync + objection handling + confirmations                 │
+│     Revenue: $5,500-7,500 per agent                                          │
+│     Works AFTER Lead Qualifier. Chain them together.                         │
+│                                                                              │
+│  PROPOSAL GENERATOR AGENT      Build Time: 2-3 days                         │
+│     What: Intake form → PDF proposal in 2 min → payment link                │
+│     Revenue: $3,500-5,000 per agent                                          │
+│     Converts prospects to customers while you sleep.                         │
+│                                                                              │
+│  CLIENT SUCCESS MONITOR        Build Time: 1-2 days                         │
+│     What: Metrics dashboard + alerts + KPI tracking                          │
+│     Revenue: $1,500-3,000 per agent                                          │
+│     Proves ROI. Retention + upsell tool.                                     │
+│                                                                              │
+│  TIP: Build all 4 for one client = $10-15K project = 4-5 weeks work         │
+│                                                                              │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ CRITICAL CONSTANTS (Store in .env.local — NEVER commit to git) ───────────┐
+│                                                                              │
+│  GHL_LOCATION_ID   = [your value]                                            │
+│  GHL_API_KEY       = [your value]                                            │
+│  META_PIXEL_ID     = [your value]                                            │
+│  GA4_PROPERTY      = [your value]                                            │
+│  Tech Stack:  GHL + n8n + Supabase + Netlify + Stripe                       │
+│  Target Niche: HVAC, Tree Care, Cleaning, Property Mgmt (San Antonio)        │
+│  Currency:    USD ($)                                                        │
+│                                                                              │
+│  ⚠️  NEVER hardcode these. Use Supabase secrets instead.                   │
+│                                                                              │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ DEPLOYMENT WORKFLOW ──────────────────────────────────────────────────────┐
+│                                                                              │
+│  Pre-Deploy Checklist:                                                       │
+│    ☐ Env vars in Supabase secrets (NOT in code)                             │
+│    ☐ Audit log table created in Supabase                                    │
+│    ☐ Error → Sentry + email alerts configured                               │
+│    ☐ Test with real GHL webhook (not sandbox)                               │
+│    ☐ Data validation: no bad state to GHL                                   │
+│                                                                              │
+│  Deploy:                                                                     │
+│    $ netlify deploy --prod                                                   │
+│    → Live in 60 seconds                                                      │
+│    → You have a shareable URL                                                │
+│                                                                              │
+│  Post-Deploy:                                                                │
+│    ☐ Client tests end-to-end                                                │
+│    ☐ Metrics dashboard live                                                  │
+│    ☐ Escalation path defined                                                 │
+│    ☐ Backup manual process ready                                             │
+│                                                                              │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ MONTHLY REVENUE CADENCE ──────────────────────────────────────────────────┐
+│                                                                              │
+│  WEEK 1 (Discovery + Build)                                                  │
+│    • Client call (20 min): What's broken?                                    │
+│    • Claude Code build (1-3 hours)                                           │
+│    • Deploy to Netlify (5 min)                                               │
+│    • Client test (30 min)                                                    │
+│    Revenue: $2K-5.5K                                                         │
+│                                                                              │
+│  WEEK 2-3 (Launch + Optimize)                                                │
+│    • Go-live with agent (clients use it)                                     │
+│    • Monitor metrics (watch ROI happen)                                      │
+│    • A/B test copy (objection responses)                                     │
+│    • Upsell: "Want the next agent in the chain?"                             │
+│    Revenue: Retention + Upsell leads                                         │
+│                                                                              │
+│  WEEK 4 (Monitor + Plan Next)                                                │
+│    • Export weekly metrics CSV                                               │
+│    • Flag issues (webhook lag? payment fails?)                               │
+│    • Plan next sprint (next agent type)                                      │
+│    • Recurring: $1-2K/month retainer                                         │
+│                                                                              │
+│  MONTHLY MATH:                                                               │
+│    Week 1:   $2.5K (lead qualifier) + $0.5K (retainer)                      │
+│    Week 2:   $5.0K (appt scheduler upsell) + $0.5K (retainer x2)           │
+│    Week 3:   $3.5K (proposal generator) + $1.0K (retainer x3)              │
+│    Week 4:   $2.0K (retainer adjustments + diagnostics)                     │
+│    ──────────────────────────────────────────────────                        │
+│    TOTAL:    ~$14K-15K/month per founder working ~20 hrs/w                  │
+│                                                                              │
+│    Scale to 4-5 clients in parallel → $50K-75K/month steady state           │
+│                                                                              │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ TROUBLESHOOTING (When Things Break) ──────────────────────────────────────┐
+│                                                                              │
+│  Problem: GHL webhook not firing                                             │
+│  → Check webhook URL is correct in GHL UI                                   │
+│  → Verify Location ID in your code                                           │
+│  → Test webhook in GHL UI (Send Test button)                                │
+│                                                                              │
+│  Problem: Netlify deploy hangs                                               │
+│  → You have a heavy dependency (ML model, large lib)                        │
+│  → Solution: Use lightweight libs, offload to Supabase edge functions       │
+│                                                                              │
+│  Problem: Payment webhook missed                                             │
+│  → Race condition. Webhook arrived before order was ready.                  │
+│  → Solution: Add 500ms delay on webhook handler                             │
+│                                                                              │
+│  Problem: SMS not sending                                                    │
+│  → Twilio/platform account deactivated mid-month                            │
+│  → Solution: Pre-fund account, set billing alerts                           │
+│                                                                              │
+│  Problem: Agent "forgets" context between sessions                           │
+│  → Session timeout. State not persisted.                                    │
+│  → Solution: Store state in Supabase, load on resume                        │
+│                                                                              │
+└────────────────────────────────────────────────────────────────────────────┘
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║  NEXT ACTION: Open Claude Code, create a folder, paste MEGA_PROMPT.txt,      ║
+║  and ask: "Build me a Lead Qualifier Agent for [Client Name]."               ║
+║                                                                               ║
+║  Watch it work in 10 minutes. Then ship it and bill $2,500.                  ║
+║                                                                               ║
+║  This is how you scale Kingdom Systems.                                       ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
