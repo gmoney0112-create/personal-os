@@ -89,8 +89,6 @@ RLS must enforce `user_id = auth.uid()` for all operations.
 - Tests live in `src/__tests__/`, use `vi.fn()` for mocks
 
 ## Known Technical Debt
-- `useTasks` performs a full refetch after `addTask` (instead of optimistic update)
-- No loading/error state for AI command bar network failures beyond the catch block
-- `completed_at` is set client-side in `useTasks.updateTask` but server-side in `server.ts` — the logic is duplicated and could drift
+- `completed_at` is set client-side in `useTasks.updateTask` and server-side in `server.ts` — the logic is duplicated and could drift
 - No E2E tests (only unit + component tests)
-- Analytics view has no empty-state handling
+- Supabase chunk (212 KB gzip: 55 KB) loads on initial page load even though the backend also has a server-side Supabase client; the direct-client path in `useTasks` is what forces this

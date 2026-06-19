@@ -10,6 +10,18 @@ export default defineConfig({
       '/api': 'http://localhost:3001',
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'recharts': ['recharts'],
+          'supabase': ['@supabase/supabase-js'],
+          'anthropic': ['@anthropic-ai/sdk'],
+        },
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,

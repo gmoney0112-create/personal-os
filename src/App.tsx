@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 import { useTasks } from './hooks/useTasks';
@@ -6,7 +6,8 @@ import LoginScreen from './components/LoginScreen';
 import TaskInput from './components/TaskInput';
 import TaskList from './components/TaskList';
 import AICommandBar from './components/AICommandBar';
-import AnalyticsDashboard from './components/AnalyticsDashboard';
+
+const AnalyticsDashboard = lazy(() => import('./components/AnalyticsDashboard'));
 
 type View = 'tasks' | 'analytics';
 
@@ -73,7 +74,9 @@ export default function App() {
             />
           </>
         ) : (
-          <AnalyticsDashboard tasks={tasks} />
+          <Suspense fallback={<div className="text-center text-gray-600 py-20 text-xs uppercase tracking-widest">Loading Analytics...</div>}>
+            <AnalyticsDashboard tasks={tasks} />
+          </Suspense>
         )}
       </main>
     </div>
