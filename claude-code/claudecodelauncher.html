@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code Project Launcher | Kingdom Systems</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #ff6b5b;
+            padding-bottom: 20px;
+        }
+        
+        h1 {
+            color: #ff6b5b;
+            font-size: 2.5em;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            color: #b0b0b0;
+            font-size: 1.1em;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: #0f3460;
+            border: 1px solid #ff6b5b;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .card h2 {
+            color: #ff6b5b;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .card h3 {
+            color: #4db8e8;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .card p {
+            color: #b0b0b0;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+        
+        .checklist {
+            background: rgba(255, 107, 91, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        
+        .checklist-item input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .checklist-item label {
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .agent-section {
+            background: #0f3460;
+            border: 1px solid #4db8e8;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .agent-title {
+            font-size: 1.4em;
+            color: #4db8e8;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .emoji {
+            font-size: 1.5em;
+        }
+        
+        .copy-btn {
+            background: #ff6b5b;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        
+        .copy-btn:hover {
+            background: #ff5245;
+        }
+        
+        .code-block {
+            background: #1a1a2e;
+            border-left: 3px solid #ff6b5b;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            overflow-x: auto;
+            margin: 10px 0;
+            color: #4db8e8;
+            line-height: 1.4;
+        }
+        
+        .info-box {
+            background: rgba(77, 184, 232, 0.1);
+            border-left: 3px solid #4db8e8;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        
+        .warning-box {
+            background: rgba(255, 107, 91, 0.1);
+            border-left: 3px solid #ff6b5b;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        
+        .pricing-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.95em;
+        }
+        
+        .pricing-table th, .pricing-table td {
+            border: 1px solid #ff6b5b;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        .pricing-table th {
+            background: rgba(255, 107, 91, 0.1);
+            color: #ff6b5b;
+            font-weight: bold;
+        }
+        
+        .pricing-table tr:nth-child(even) {
+            background: rgba(77, 184, 232, 0.05);
+        }
+        
+        footer {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid #ff6b5b;
+            color: #b0b0b0;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+        
+        .action-button {
+            display: inline-block;
+            background: #4db8e8;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-top: 15px;
+            transition: background 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        
+        .action-button:hover {
+            background: #3da3d5;
+        }
+        
+        .action-button.primary {
+            background: #ff6b5b;
+        }
+        
+        .action-button.primary:hover {
+            background: #ff5245;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Claude Code Project Launcher</h1>
+            <p class="subtitle">Kingdom Systems AI Automation Agency | Build & Ship in Minutes</p>
+        </header>
+        
+        <div class="main-grid">
+            <!-- Left: Quick Setup -->
+            <div class="card">
+                <h2>7-Step Setup (One Time)</h2>
+                
+                <div class="checklist">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="step1">
+                        <label for="step1"><strong>Step 1:</strong> mkdir ~/ClaudeCode/KingdomSystems</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="step2">
+                        <label for="step2"><strong>Step 2:</strong> Enable "Allow bypass permissions mode"</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="step3">
+                        <label for="step3"><strong>Step 3:</strong> Connect Netlify + Supabase</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="step4">
+                        <label for="step4"><strong>Step 4:</strong> Set Opus 4.8 + Effort High</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="step5">
+                        <label for="step5"><strong>Step 5:</strong> Paste the mega-prompt (below)</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="step6">
+                        <label for="step6"><strong>Step 6:</strong> Download Claude Code app ($20/mo)</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="step7">
+                        <label for="step7"><strong>Step 7:</strong> Select folder & build</label>
+                    </div>
+                </div>
+                
+                <div class="info-box">
+                    <strong>✅ Setup Complete:</strong> You're ready to build agents. Each project takes 10-15 minutes to prototype.
+                </div>
+            </div>
+            
+            <!-- Right: Revenue Quick Math -->
+            <div class="card">
+                <h2>💰 Revenue Per Agent</h2>
+                
+                <table class="pricing-table">
+                    <tr>
+                        <th>Agent Type</th>
+                        <th>Build Time</th>
+                        <th>Price</th>
+                    </tr>
+                    <tr>
+                        <td>Lead Qualifier</td>
+                        <td>3-4 hrs</td>
+                        <td>$2,000-2,500</td>
+                    </tr>
+                    <tr>
+                        <td>Appt Scheduler</td>
+                        <td>2-3 days</td>
+                        <td>$5,500-7,500</td>
+                    </tr>
+                    <tr>
+                        <td>Proposal Gen</td>
+                        <td>2-3 days</td>
+                        <td>$3,500-5,000</td>
+                    </tr>
+                    <tr>
+                        <td>Success Monitor</td>
+                        <td>1-2 days</td>
+                        <td>$1,500-3,000</td>
+                    </tr>
+                </table>
+                
+                <h3>Monthly Math (Realistic Pace)</h3>
+                <div class="code-block">
+Week 1: $2.5K (Lead Qualifier)
+Week 2: $5.5K (Appointment Scheduler upsell)
+Week 3: $3.5K (Proposal Generator)
+Week 4: $2.0K (retainer + optimization)
+────────────────────
+TOTAL: ~$13.5K/month
+                </div>
+                
+                <div class="info-box">
+                    <strong>Scale to 4-5 clients:</strong> $50-75K/month steady state.
+                </div>
+            </div>
+        </div>
+        
+        <!-- Agent Templates -->
+        <h2 style="color: #ff6b5b; margin-bottom: 20px; font-size: 1.8em;">🎯 Copy/Paste Ready: Agent Launch Templates</h2>
+        
+        <!-- Agent 1: Lead Qualifier -->
+        <div class="agent-section">
+            <div class="agent-title">
+                <span class="emoji">🎯</span>
+                <span>Lead Qualifier Agent</span>
+                <span style="margin-left: auto; color: #4db8e8; font-size: 0.8em;">Fastest revenue ($2-2.5K)</span>
+            </div>
+            <p style="color: #b0b0b0; margin-bottom: 15px;">
+                <strong>What it does:</strong> Phone/email intake form → Lead scoring → Route hot leads to calendar booking, warm leads to email nurture, cold leads to archive.
+            </p>
+            
+            <div class="code-block">
+Build me a Lead Qualifier Agent for [CLIENT_NAME].
+
+Intake fields:
+- Name
+- Business Type (HVAC, Tree Care, Cleaning, etc.)
+- Monthly Revenue
+- Current Pain Point
+- Budget Available
+- Best Contact Method
+
+Scoring Logic:
+- Disqualify: Revenue < $10K/month OR Budget = $0
+- Hot Lead (score 80+): HVAC + $20K+ revenue + $3K+ budget
+- Warm Lead (score 50-79): Any service biz, $5K-20K revenue
+- Cold Lead (< 50): Low revenue or unknown fit
+
+Routing:
+- Hot: Send to Calendly link + SMS confirmation
+- Warm: Send nurture email sequence + mark in GHL
+- Cold: Archive in GHL with "not-ready" tag
+
+Deploy to Netlify. Use Supabase for data storage.
+            </div>
+            
+            <button class="copy-btn" onclick="copyToClipboard('agent1-prompt')">Copy Prompt</button>
+            <span id="agent1-prompt" style="display:none;">Build me a Lead Qualifier Agent for [CLIENT_NAME].
+
+Intake fields:
+- Name
+- Business Type (HVAC, Tree Care, Cleaning, etc.)
+- Monthly Revenue
+- Current Pain Point
+- Budget Available
+- Best Contact Method
+
+Scoring Logic:
+- Disqualify: Revenue < $10K/month OR Budget = $0
+- Hot Lead (score 80+): HVAC + $20K+ revenue + $3K+ budget
+- Warm Lead (score 50-79): Any service biz, $5K-20K revenue
+- Cold Lead (< 50): Low revenue or unknown fit
+
+Routing:
+- Hot: Send to Calendly link + SMS confirmation
+- Warm: Send nurture email sequence + mark in GHL
+- Cold: Archive in GHL with "not-ready" tag
+
+Deploy to Netlify. Use Supabase for data storage.</span>
+        </div>
+        
+        <!-- Agent 2: Appointment Scheduler -->
+        <div class="agent-section">
+            <div class="agent-title">
+                <span class="emoji">📅</span>
+                <span>Appointment Scheduler Agent</span>
+                <span style="margin-left: auto; color: #4db8e8; font-size: 0.8em;">Chain after Lead Qualifier ($5.5-7.5K)</span>
+            </div>
+            <p style="color: #b0b0b0; margin-bottom: 15px;">
+                <strong>What it does:</strong> Hot leads from Lead Qualifier → Calendar sync → Handle objections → Send confirmation (SMS + email + calendar add).
+            </p>
+            
+            <div class="code-block">
+Build me an Appointment Scheduler for [CLIENT_NAME].
+
+Integrations:
+- Calendly API (free tier)
+- Twilio for SMS
+- GHL webhook for lead updates
+- Email for confirmations
+
+Workflow:
+1. Lead lands on calendar page
+2. User picks time slot
+3. If objection (too expensive, too busy):
+   - Too Expensive → Show ROI calculator + case study
+   - Too Busy → Offer 15-min async video overview
+   - Need to Think → Auto-schedule follow-up in 3 days
+4. On booking: SMS + Email + Calendar invite
+
+Use Supabase to track objection responses. Export daily metrics.
+            </div>
+            
+            <button class="copy-btn" onclick="copyToClipboard('agent2-prompt')">Copy Prompt</button>
+            <span id="agent2-prompt" style="display:none;">Build me an Appointment Scheduler for [CLIENT_NAME].
+
+Integrations:
+- Calendly API (free tier)
+- Twilio for SMS
+- GHL webhook for lead updates
+- Email for confirmations
+
+Workflow:
+1. Lead lands on calendar page
+2. User picks time slot
+3. If objection (too expensive, too busy):
+   - Too Expensive → Show ROI calculator + case study
+   - Too Busy → Offer 15-min async video overview
+   - Need to Think → Auto-schedule follow-up in 3 days
+4. On booking: SMS + Email + Calendar invite
+
+Use Supabase to track objection responses. Export daily metrics.</span>
+        </div>
+        
+        <!-- Agent 3: Proposal Generator -->
+        <div class="agent-section">
+            <div class="agent-title">
+                <span class="emoji">📄</span>
+                <span>Proposal Generator Agent</span>
+                <span style="margin-left: auto; color: #4db8e8; font-size: 0.8em;">Converts prospects ($3.5-5K)</span>
+            </div>
+            <p style="color: #b0b0b0; margin-bottom: 15px;">
+                <strong>What it does:</strong> Intake form → Custom PDF proposal in 2 minutes → Payment link (Stripe or FastPayDirect) → Confirmation.
+            </p>
+            
+            <div class="code-block">
+Build me a Proposal Generator for [CLIENT_NAME].
+
+Intake Form:
+- Business Name
+- Service Type
+- Current Challenges
+- Estimated Monthly ROI Goal
+- Timeline (Start ASAP / 30 days / 90 days)
+
+PDF Generation:
+- Client name & logo
+- Problem statement
+- Proposed solution (AI agent type)
+- Timeline & deliverables
+- Investment: [AMOUNT] (Stripe checkout link)
+- Client signature field (digital)
+
+Payment Flow:
+- Stripe webhook → Invoice created
+- Confirm email + payment receipt
+- Tag in GHL "proposal-accepted"
+- Trigger next workflow (project kick-off)
+
+Deploy to Netlify. Use Supabase for proposals archive.
+            </div>
+            
+            <button class="copy-btn" onclick="copyToClipboard('agent3-prompt')">Copy Prompt</button>
+            <span id="agent3-prompt" style="display:none;">Build me a Proposal Generator for [CLIENT_NAME].
+
+Intake Form:
+- Business Name
+- Service Type
+- Current Challenges
+- Estimated Monthly ROI Goal
+- Timeline (Start ASAP / 30 days / 90 days)
+
+PDF Generation:
+- Client name & logo
+- Problem statement
+- Proposed solution (AI agent type)
+- Timeline & deliverables
+- Investment: [AMOUNT] (Stripe checkout link)
+- Client signature field (digital)
+
+Payment Flow:
+- Stripe webhook → Invoice created
+- Confirm email + payment receipt
+- Tag in GHL "proposal-accepted"
+- Trigger next workflow (project kick-off)
+
+Deploy to Netlify. Use Supabase for proposals archive.</span>
+        </div>
+        
+        <!-- Agent 4: Success Monitor -->
+        <div class="agent-section">
+            <div class="agent-title">
+                <span class="emoji">📊</span>
+                <span>Client Success Monitor Agent</span>
+                <span style="margin-left: auto; color: #4db8e8; font-size: 0.8em;">Proves ROI ($1.5-3K)</span>
+            </div>
+            <p style="color: #b0b0b0; margin-bottom: 15px;">
+                <strong>What it does:</strong> Real-time metrics dashboard + KPI alerts + auto-escalation when performance drops.
+            </p>
+            
+            <div class="code-block">
+Build me a Client Success Monitor Dashboard for [CLIENT_NAME].
+
+Data Sources:
+- GHL (leads qualified, scheduled, converted)
+- Calendly (booked vs. no-show rate)
+- Stripe (revenue collected)
+- Google Analytics (website traffic)
+
+Key Metrics:
+- Leads per week (actual vs. target)
+- Conversion rate (%)
+- Appointment show rate (%)
+- Average deal size ($)
+- Monthly revenue impact ($)
+- ROI vs. investment (%)
+
+Alerts:
+- If leads < 50% of target → Email alert
+- If show rate < 80% → Escalate to client
+- If revenue down > 20% from last week → Call (you)
+
+Dashboard:
+- Live tile updates (refresh every 5 min)
+- Weekly CSV export email
+- "Next Agent to Add" recommendation based on bottleneck
+            </div>
+            
+            <button class="copy-btn" onclick="copyToClipboard('agent4-prompt')">Copy Prompt</button>
+            <span id="agent4-prompt" style="display:none;">Build me a Client Success Monitor Dashboard for [CLIENT_NAME].
+
+Data Sources:
+- GHL (leads qualified, scheduled, converted)
+- Calendly (booked vs. no-show rate)
+- Stripe (revenue collected)
+- Google Analytics (website traffic)
+
+Key Metrics:
+- Leads per week (actual vs. target)
+- Conversion rate (%)
+- Appointment show rate (%)
+- Average deal size ($)
+- Monthly revenue impact ($)
+- ROI vs. investment (%)
+
+Alerts:
+- If leads < 50% of target → Email alert
+- If show rate < 80% → Escalate to client
+- If revenue down > 20% from last week → Call (you)
+
+Dashboard:
+- Live tile updates (refresh every 5 min)
+- Weekly CSV export email
+- "Next Agent to Add" recommendation based on bottleneck</span>
+        </div>
+        
+        <!-- The Mega-Prompt Section -->
+        <div style="background: #16213e; border: 2px solid #ff6b5b; border-radius: 8px; padding: 30px; margin: 40px 0;">
+            <h2 style="color: #ff6b5b; margin-bottom: 20px; font-size: 1.8em;">🔑 The Mega-Prompt (Step 5)</h2>
+            <p style="color: #b0b0b0; margin-bottom: 20px;">
+                Paste this entire prompt into Claude Code as your first message. This one system prompt does more than all other setup steps combined.
+            </p>
+            
+            <div class="code-block" style="max-height: 500px; overflow-y: auto;">
+You are Claude Code, the AI development partner for Kingdom Systems AI automation agency.
+
+CORE DIRECTIVES:
+1. You can code. I don't read it. Build complete, production-ready solutions.
+2. Bypass is ON. Use all permissions.
+3. Interview me ONE question at a time.
+4. Ship fast. Working code today beats perfect tomorrow.
+
+KINGDOM SYSTEMS CONTEXT:
+- Solo founder AI automation agency for blue-collar Christian business owners
+- Target: HVAC, tree care, cleaning, property management (San Antonio)
+- Revenue vehicles: Lead Qualifier, Appointment Scheduler, Proposal Generator agents
+- Tech: GHL + n8n + Supabase + Netlify + Stripe
+
+CRITICAL CONSTANTS:
+GHL Location: [GHL_LOCATION_ID]
+GHL API: [GHL_API_KEY — set in .env.local]
+Meta Pixel: [META_PIXEL_ID]
+GA4: [GA4_PROPERTY]
+
+TECHNICAL PATTERNS:
+- Frontend: React + Tailwind → Netlify
+- Backend: n8n + Supabase webhooks
+- Data: Supabase PostgreSQL (audit logs required)
+- Payments: Stripe webhook → n8n → GHL
+- Monitoring: Sentry logs + daily CSV export
+
+DO NOT:
+- Explain code (unless asked)
+- Ask me to pick between 5 options (you pick best)
+- Wait for approval (ship working code)
+- Build anything not revenue-generating
+
+BEGIN: What are we building?
+            </div>
+            
+            <button class="copy-btn" onclick="copyToClipboard('mega-prompt')" style="margin-top: 15px;">Copy Full Mega-Prompt</button>
+            <span id="mega-prompt" style="display:none;">You are Claude Code, the AI development partner for Kingdom Systems AI automation agency.
+
+CORE DIRECTIVES:
+1. You can code. I don't read it. Build complete, production-ready solutions.
+2. Bypass is ON. Use all permissions.
+3. Interview me ONE question at a time.
+4. Ship fast. Working code today beats perfect tomorrow.
+
+KINGDOM SYSTEMS CONTEXT:
+- Solo founder AI automation agency for blue-collar Christian business owners
+- Target: HVAC, tree care, cleaning, property management (San Antonio)
+- Revenue vehicles: Lead Qualifier, Appointment Scheduler, Proposal Generator agents
+- Tech: GHL + n8n + Supabase + Netlify + Stripe
+
+CRITICAL CONSTANTS:
+GHL Location: [GHL_LOCATION_ID]
+GHL API: [GHL_API_KEY — set in .env.local]
+Meta Pixel: [META_PIXEL_ID]
+GA4: [GA4_PROPERTY]
+
+TECHNICAL PATTERNS:
+- Frontend: React + Tailwind → Netlify
+- Backend: n8n + Supabase webhooks
+- Data: Supabase PostgreSQL (audit logs required)
+- Payments: Stripe webhook → n8n → GHL
+- Monitoring: Sentry logs + daily CSV export
+
+DO NOT:
+- Explain code (unless asked)
+- Ask me to pick between 5 options (you pick best)
+- Wait for approval (ship working code)
+- Build anything not revenue-generating
+
+BEGIN: What are we building?</span>
+        </div>
+        
+        <!-- Next Actions -->
+        <div class="card" style="border: 2px solid #4db8e8; margin-bottom: 30px;">
+            <h2 style="color: #4db8e8;">⚡ Your Next 3 Actions (Do These Today)</h2>
+            
+            <div style="background: rgba(77, 184, 232, 0.1); padding: 15px; border-radius: 5px; margin: 15px 0;">
+                <h3 style="color: #4db8e8; margin-bottom: 8px;">Action 1: Setup (15 min)</h3>
+                <p style="color: #b0b0b0;">
+                    Create folder: <code>~/ClaudeCode/KingdomSystems</code><br>
+                    Download Claude Code app from claude.com/download (Pro plan, $20/month)<br>
+                    Enable bypass permissions in settings
+                </p>
+            </div>
+            
+            <div style="background: rgba(77, 184, 232, 0.1); padding: 15px; border-radius: 5px; margin: 15px 0;">
+                <h3 style="color: #4db8e8; margin-bottom: 8px;">Action 2: First Agent Build (45 min)</h3>
+                <p style="color: #b0b0b0;">
+                    Open Claude Code → Create new project<br>
+                    Paste the mega-prompt (copy button above)<br>
+                    Ask: "Build me a Lead Qualifier Agent for [Client Name]"<br>
+                    Watch it build live in 10-15 minutes
+                </p>
+            </div>
+            
+            <div style="background: rgba(77, 184, 232, 0.1); padding: 15px; border-radius: 5px; margin: 15px 0;">
+                <h3 style="color: #4db8e8; margin-bottom: 8px;">Action 3: Deploy (10 min)</h3>
+                <p style="color: #b0b0b0;">
+                    One-click: <code>netlify deploy --prod</code><br>
+                    Copy the live URL<br>
+                    Send to client with invoice for $2,500<br>
+                    Collect payment via Stripe link in the agent interface
+                </p>
+            </div>
+            
+            <button class="action-button primary" style="width: 100%; padding: 15px; font-size: 1.1em; margin-top: 20px;">
+                → Open Claude Code Now
+            </button>
+        </div>
+        
+        <footer>
+            <p>Kingdom Systems AI Automation Agency | Built for Blue-Collar Christian Business Owners</p>
+            <p style="margin-top: 10px;">Download the full guide: <strong>CLAUDE_CODE_KINGDOM_SYSTEMS.md</strong> | Quick Reference: <strong>CLAUDE_CODE_QUICK_REFERENCE.txt</strong></p>
+        </footer>
+    </div>
+    
+    <script>
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
